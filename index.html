@@ -2,49 +2,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>IP House - Media Extractor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IP House - Media Source Extractor</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0a1d37;
-      color: #ffffff;
-      padding: 30px;
+      font-family: Arial, sans-serif;
+      background-color: #f0f4fa;
       margin: 0;
+      padding: 20px;
+      color: #333;
     }
-    h2 {
-      text-align: center;
-      color: #ffffff;
-    }
-    textarea {
-      width: 100%;
-      height: 120px;
+    h1 {
+      color: #fff;
+      background-color: #1c3d5a;
+      padding: 15px 20px;
       border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    input, button {
       padding: 10px;
-      font-size: 14px;
-      border: 1px solid #ddd;
-      background-color: #f8f9fa;
-      color: #000;
+      margin-right: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
     button {
-      margin: 8px 5px 5px 0;
-      padding: 10px 16px;
-      border: none;
-      background-color: #1e90ff;
+      background-color: #1c3d5a;
       color: white;
-      border-radius: 5px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #1c78d1;
+      background-color: #2d567c;
     }
     table {
       width: 100%;
-      margin-top: 20px;
       border-collapse: collapse;
-      display: none;
-      background-color: #ffffff;
-      color: #000;
+      margin-top: 20px;
     }
     th, td {
       border: 1px solid #ddd;
@@ -52,18 +45,19 @@
       text-align: left;
     }
     th {
-      background-color: #003366;
+      background-color: #1c3d5a;
       color: white;
     }
   </style>
 </head>
 <body>
-  <h2>🏠 IP House - Media Source Extractor</h2>
-  <textarea id="urlInput" placeholder="Paste multiple infringing URLs here..."></textarea><br>
-  <button onclick="extract()">Extract URLs</button>
+  <h1>IP House - Media Source Extractor</h1>
+  <textarea id="urlInput" rows="4" style="width: 70%;" placeholder="Enter one or more URLs, one per line..."></textarea>
+  <br><br>
+  <button onclick="extractMedia()">Extract URLs</button>
   <button onclick="copyResult()">Copy Result</button>
   <button onclick="exportCSV()">Export CSV</button>
-  <button onclick="clearOutput()">Clear</button>
+  <button onclick="clearTable()">Clear</button>
   <table id="resultTable">
     <thead>
       <tr><th>Infringing URL</th><th>Source URL</th></tr>
@@ -72,58 +66,51 @@
   </table>
 
   <script>
-    async function extract() {
-      const input = document.getElementById('urlInput').value.trim();
-      if (!input) return alert("Please enter at least one URL.");
-      const urls = input.split(/\n+/);
-      const response = await fetch("/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls })
-      });
-      const data = await response.json();
-      const table = document.getElementById("resultTable");
-      const tbody = table.querySelector("tbody");
-      tbody.innerHTML = "";
-      for (const result of data.results) {
-        if (result.sources.length > 0) {
-          result.sources.forEach(src => {
-            const row = `<tr><td>${result.url}</td><td>${src}</td></tr>`;
-            tbody.innerHTML += row;
-          });
-        } else {
-          tbody.innerHTML += `<tr><td>${result.url}</td><td>No media found</td></tr>`;
+    async function extractMedia() {
+      const input = document.getElementById("urlInput").value.trim();
+      const urls = input.split("\n").map(u => u.trim()).filter(Boolean);
+      const table = document.querySelector("#resultTable tbody");
+      table.innerHTML = "";
+      for (const url of urls) {
+        try {
+          const res = await fetch(`/extract?url=${encodeURIComponent(url)}`);
+          const data = await res.json();
+          if (data.sources.length) {
+            data.sources.forEach(source => {
+              const row = table.insertRow();
+              row.insertCell(0).textContent = url;
+              row.insertCell(1).textContent = source;
+            });
+          } else {
+            const row = table.insertRow();
+            row.insertCell(0).textContent = url;
+            row.insertCell(1).textContent = "No media found";
+          }
+        } catch (err) {
+          const row = table.insertRow();
+          row.insertCell(0).textContent = url;
+          row.insertCell(1).textContent = "Error fetching URL";
         }
       }
-      table.style.display = "";
     }
-
     function copyResult() {
-      const table = document.getElementById("resultTable");
-      if (table.style.display === "none") return alert("No results to copy.");
-      const rows = Array.from(table.querySelectorAll("tr"));
-      const text = rows.map(row => Array.from(row.cells).map(cell => cell.textContent).join("\t")).join("\n");
-      navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+      const text = [...document.querySelectorAll("#resultTable tbody tr")]
+        .map(row => [...row.cells].map(td => td.textContent).join("\t"))
+        .join("\n");
+      navigator.clipboard.writeText(text);
     }
-
     function exportCSV() {
-      const table = document.getElementById("resultTable");
-      if (table.style.display === "none") return alert("No results to export.");
-      let csv = "Infringing URL,Source URL\n";
-      table.querySelectorAll("tbody tr").forEach(row => {
-        const cols = row.querySelectorAll("td");
-        csv += `"${cols[0].innerText}","${cols[1].innerText}"\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const rows = [["Infringing URL", "Source URL"], ...[...document.querySelectorAll("#resultTable tbody tr")]
+        .map(row => [...row.cells].map(td => td.textContent))];
+      const csv = rows.map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "ip-house-sources.csv";
+      a.download = "media_sources.csv";
       a.click();
     }
-
-    function clearOutput() {
-      document.getElementById("resultTable").style.display = "none";
-      document.getElementById("resultTable").querySelector("tbody").innerHTML = "";
+    function clearTable() {
+      document.querySelector("#resultTable tbody").innerHTML = "";
     }
   </script>
 </body>

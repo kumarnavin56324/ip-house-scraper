@@ -3,114 +3,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IP House - Media Source Extractor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IP House - Media Extractor</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f4fa;
-      margin: 0;
-      padding: 20px;
-      color: #333;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a2740;
+      color: white;
+      text-align: center;
+      padding: 2em;
     }
     h1 {
-      color: #fff;
-      background-color: #1c3d5a;
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      font-size: 2em;
+      color: #00bfff;
     }
-    input, button {
-      padding: 10px;
-      margin-right: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    .logo {
+      max-width: 120px;
+      margin-bottom: 1em;
+    }
+    textarea {
+      width: 90%;
+      height: 150px;
+      margin: 1em 0;
+      border-radius: 8px;
+      border: none;
+      padding: 1em;
+      font-size: 1em;
     }
     button {
-      background-color: #1c3d5a;
+      padding: 0.6em 1.2em;
+      margin: 0.5em;
+      background-color: #00bfff;
       color: white;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    button:hover {
-      background-color: #2d567c;
+      font-weight: bold;
+      font-size: 1em;
     }
     table {
-      width: 100%;
+      margin: 2em auto;
       border-collapse: collapse;
-      margin-top: 20px;
+      width: 90%;
+      color: white;
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
+      border: 1px solid white;
+      padding: 0.6em;
     }
     th {
-      background-color: #1c3d5a;
-      color: white;
+      background-color: #0077b6;
     }
   </style>
 </head>
 <body>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/OOjs_UI_icon_lock-ltr.svg" class="logo" alt="IP House Logo" />
   <h1>IP House - Media Source Extractor</h1>
-  <textarea id="urlInput" rows="4" style="width: 70%;" placeholder="Enter one or more URLs, one per line..."></textarea>
-  <br><br>
-  <button onclick="extractMedia()">Extract URLs</button>
-  <button onclick="copyResult()">Copy Result</button>
-  <button onclick="exportCSV()">Export CSV</button>
-  <button onclick="clearTable()">Clear</button>
-  <table id="resultTable">
+  <textarea id="inputUrls" placeholder="Paste infringing URLs, one per line..."></textarea><br/>
+  <button onclick="extract()">▶ Extract</button>
+  <button onclick="clearTable()">🧹 Clear</button>
+  <table id="resultsTable" style="display:none;">
     <thead>
       <tr><th>Infringing URL</th><th>Source URL</th></tr>
     </thead>
     <tbody></tbody>
   </table>
-
   <script>
-    async function extractMedia() {
-      const input = document.getElementById("urlInput").value.trim();
-      const urls = input.split("\n").map(u => u.trim()).filter(Boolean);
-      const table = document.querySelector("#resultTable tbody");
-      table.innerHTML = "";
+    async function extract() {
+      const urls = document.getElementById('inputUrls').value.trim().split(/\n+/);
+      const tbody = document.querySelector('#resultsTable tbody');
+      tbody.innerHTML = '';
+      if (!urls.length) return;
+
       for (const url of urls) {
-        try {
-          const res = await fetch(`/extract?url=${encodeURIComponent(url)}`);
-          const data = await res.json();
-          if (data.sources.length) {
-            data.sources.forEach(source => {
-              const row = table.insertRow();
-              row.insertCell(0).textContent = url;
-              row.insertCell(1).textContent = source;
-            });
-          } else {
-            const row = table.insertRow();
-            row.insertCell(0).textContent = url;
-            row.insertCell(1).textContent = "No media found";
-          }
-        } catch (err) {
-          const row = table.insertRow();
-          row.insertCell(0).textContent = url;
-          row.insertCell(1).textContent = "Error fetching URL";
+        const res = await fetch('/extract?url=' + encodeURIComponent(url));
+        const sources = await res.json();
+        if (sources.length === 0) {
+          const row = `<tr><td>${url}</td><td>No media found</td></tr>`;
+          tbody.innerHTML += row;
+        } else {
+          sources.forEach(source => {
+            const row = `<tr><td>${url}</td><td>${source}</td></tr>`;
+            tbody.innerHTML += row;
+          });
         }
       }
+      document.getElementById('resultsTable').style.display = 'table';
     }
-    function copyResult() {
-      const text = [...document.querySelectorAll("#resultTable tbody tr")]
-        .map(row => [...row.cells].map(td => td.textContent).join("\t"))
-        .join("\n");
-      navigator.clipboard.writeText(text);
-    }
-    function exportCSV() {
-      const rows = [["Infringing URL", "Source URL"], ...[...document.querySelectorAll("#resultTable tbody tr")]
-        .map(row => [...row.cells].map(td => td.textContent))];
-      const csv = rows.map(r => r.join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "media_sources.csv";
-      a.click();
-    }
+
     function clearTable() {
-      document.querySelector("#resultTable tbody").innerHTML = "";
+      document.getElementById('resultsTable').style.display = 'none';
+      document.querySelector('#resultsTable tbody').innerHTML = '';
     }
   </script>
 </body>

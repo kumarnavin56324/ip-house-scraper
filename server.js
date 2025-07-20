@@ -1,44 +1,37 @@
 
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const cheerio = require('cheerio');
+const express = require("express");
+const axios = require("axios");
+const cheerio = require("cheerio");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.static('public'));
+app.use(express.static("public"));
 
-app.get('/extract', async (req, res) => {
-  const { url } = req.query;
-  if (!url) return res.status(400).json({ error: 'Missing URL' });
+app.get("/extract", async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) return res.json([]);
 
   try {
-    const response = await axios.get(url, { timeout: 15000 });
-    const html = response.data;
-    const $ = cheerio.load(html);
-
+    const { data } = await axios.get(targetUrl);
+    const $ = cheerio.load(data);
     const sources = [];
 
-    $('iframe, embed, video, source').each((_, el) => {
-      const src = $(el).attr('src');
-      if (src && !sources.includes(src)) sources.push(src.startsWith('//') ? 'https:' + src : src);
-    });
+    $("iframe").each((_, el) => sources.push($(el).attr("src")));
+    $("embed").each((_, el) => sources.push($(el).attr("src")));
+    $("video").each((_, el) => sources.push($(el).attr("src")));
+    const m3u8Matches = data.match(/https?:\/\/[^"']+\.m3u8/g);
+    if (m3u8Matches) sources.push(...m3u8Matches);
 
-    const m3u8Matches = html.match(/https?:\/\/[^"']+\.m3u8/g);
-    if (m3u8Matches) {
-      m3u8Matches.forEach(link => {
-        if (!sources.includes(link)) sources.push(link);
-      });
-    }
-
-    res.json({ url, sources });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch URL', detail: error.message });
+    const cleaned = sources.filter(Boolean).map(url => url.startsWith("//") ? "https:" + url : url);
+    res.json([...new Set(cleaned)]);
+  } catch (e) {
+    res.json([]);
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`IP House Server running on port ${PORT}`);
+  console.log("IP House Server running on port", PORT);
 });

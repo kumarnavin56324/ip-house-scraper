@@ -1,0 +1,5 @@
+📁 ip-house-scraper/
+├── 📁 public/
+│   └── index.html ✅
+├── server.js
+└── package.json

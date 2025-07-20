@@ -1,37 +1,39 @@
-
-const express = require("express");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const cors = require("cors");
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
 app.use(cors());
-app.use(express.static("public"));
+app.use(express.json());
 
-app.get("/extract", async (req, res) => {
-  const targetUrl = req.query.url;
-  if (!targetUrl) return res.json([]);
+app.get("/", (req, res) => {
+  res.send("✅ IP House Media Extractor backend is running. Use POST /extract");
+});
 
-  try {
-    const { data } = await axios.get(targetUrl);
-    const $ = cheerio.load(data);
-    const sources = [];
+app.post("/extract", async (req, res) => {
+  const urls = req.body.urls;
+  const results = [];
 
-    $("iframe").each((_, el) => sources.push($(el).attr("src")));
-    $("embed").each((_, el) => sources.push($(el).attr("src")));
-    $("video").each((_, el) => sources.push($(el).attr("src")));
-    const m3u8Matches = data.match(/https?:\/\/[^"']+\.m3u8/g);
-    if (m3u8Matches) sources.push(...m3u8Matches);
+  for (const url of urls) {
+    try {
+      const { data } = await axios.get(url, { timeout: 10000 });
+      const $ = cheerio.load(data);
+      const sources = [];
 
-    const cleaned = sources.filter(Boolean).map(url => url.startsWith("//") ? "https:" + url : url);
-    res.json([...new Set(cleaned)]);
-  } catch (e) {
-    res.json([]);
+      $("iframe, video, source, embed").each((_, el) => {
+        const src = $(el).attr("src") || $(el).attr("data-src");
+        if (src && !sources.includes(src)) sources.push(src);
+      });
+
+      results.push({ url, sources: sources.length ? sources : ["No sources found"] });
+    } catch (err) {
+      results.push({ url, sources: ["Failed to fetch"] });
+    }
   }
+
+  res.json({ results });
 });
 
-app.listen(PORT, () => {
-  console.log("IP House Server running on port", PORT);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

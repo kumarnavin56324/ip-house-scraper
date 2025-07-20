@@ -1,7 +1,7 @@
-
 {
-  "name": "ip-house-scraper",
+  "name": "ip-house-tool",
   "version": "1.0.0",
+  "description": "IP House Media Extractor",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

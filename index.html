@@ -1,100 +1,31 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>IP House - Media Extractor</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0a2740;
-      color: white;
-      text-align: center;
-      padding: 2em;
-    }
-    h1 {
-      font-size: 2em;
-      color: #00bfff;
-    }
-    .logo {
-      max-width: 120px;
-      margin-bottom: 1em;
-    }
-    textarea {
-      width: 90%;
-      height: 150px;
-      margin: 1em 0;
-      border-radius: 8px;
-      border: none;
-      padding: 1em;
-      font-size: 1em;
-    }
-    button {
-      padding: 0.6em 1.2em;
-      margin: 0.5em;
-      background-color: #00bfff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
-    }
-    table {
-      margin: 2em auto;
-      border-collapse: collapse;
-      width: 90%;
-      color: white;
-    }
-    th, td {
-      border: 1px solid white;
-      padding: 0.6em;
-    }
-    th {
-      background-color: #0077b6;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/OOjs_UI_icon_lock-ltr.svg" class="logo" alt="IP House Logo" />
-  <h1>IP House - Media Source Extractor</h1>
-  <textarea id="inputUrls" placeholder="Paste infringing URLs, one per line..."></textarea><br/>
-  <button onclick="extract()">▶ Extract</button>
-  <button onclick="clearTable()">🧹 Clear</button>
-  <table id="resultsTable" style="display:none;">
-    <thead>
-      <tr><th>Infringing URL</th><th>Source URL</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <script>
-    async function extract() {
-      const urls = document.getElementById('inputUrls').value.trim().split(/\n+/);
-      const tbody = document.querySelector('#resultsTable tbody');
-      tbody.innerHTML = '';
-      if (!urls.length) return;
-
-      for (const url of urls) {
-        const res = await fetch('/extract?url=' + encodeURIComponent(url));
-        const sources = await res.json();
-        if (sources.length === 0) {
-          const row = `<tr><td>${url}</td><td>No media found</td></tr>`;
-          tbody.innerHTML += row;
-        } else {
-          sources.forEach(source => {
-            const row = `<tr><td>${url}</td><td>${source}</td></tr>`;
-            tbody.innerHTML += row;
-          });
-        }
-      }
-      document.getElementById('resultsTable').style.display = 'table';
-    }
-
-    function clearTable() {
-      document.getElementById('resultsTable').style.display = 'none';
-      document.querySelector('#resultsTable tbody').innerHTML = '';
-    }
-  </script>
+  <header>
+    <img src="logo.png" alt="IP House Logo" class="logo" />
+    <h1>IP House Media Extractor</h1>
+  </header>
+  <main>
+    <textarea id="inputUrls" placeholder="Paste up to 5000 infringing URLs here..."></textarea>
+    <div class="button-group">
+      <button onclick="extract()">Extract</button>
+      <button onclick="clearOutput()">Clear</button>
+      <button onclick="copyResult()">Copy</button>
+      <button onclick="exportCSV()">Export CSV</button>
+    </div>
+    <table id="resultTable">
+      <thead>
+        <tr><th>Infringing URL</th><th>Source URL(s)</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+  <script src="script.js"></script>
 </body>
 </html>

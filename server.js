@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Root route to fix "Cannot GET /"
+// ✅ Root route added
 app.get("/", (req, res) => {
   res.send("✅ IP House Media Extractor backend is running. Use POST /extract");
 });

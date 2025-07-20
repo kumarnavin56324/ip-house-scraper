@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IP House - Media Extractor</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0a1d37;
+      color: #ffffff;
+      padding: 30px;
+      margin: 0;
+    }
+    h2 {
+      text-align: center;
+      color: #ffffff;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      background-color: #f8f9fa;
+      color: #000;
+    }
+    button {
+      margin: 8px 5px 5px 0;
+      padding: 10px 16px;
+      border: none;
+      background-color: #1e90ff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1c78d1;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      display: none;
+      background-color: #ffffff;
+      color: #000;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #003366;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏠 IP House - Media Source Extractor</h2>
+  <textarea id="urlInput" placeholder="Paste multiple infringing URLs here..."></textarea><br>
+  <button onclick="extract()">Extract URLs</button>
+  <button onclick="copyResult()">Copy Result</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="clearOutput()">Clear</button>
+  <table id="resultTable">
+    <thead>
+      <tr><th>Infringing URL</th><th>Source URL</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function extract() {
+      const input = document.getElementById('urlInput').value.trim();
+      if (!input) return alert("Please enter at least one URL.");
+      const urls = input.split(/\n+/);
+      const response = await fetch("/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls })
+      });
+      const data = await response.json();
+      const table = document.getElementById("resultTable");
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
+      for (const result of data.results) {
+        if (result.sources.length > 0) {
+          result.sources.forEach(src => {
+            const row = `<tr><td>${result.url}</td><td>${src}</td></tr>`;
+            tbody.innerHTML += row;
+          });
+        } else {
+          tbody.innerHTML += `<tr><td>${result.url}</td><td>No media found</td></tr>`;
+        }
+      }
+      table.style.display = "";
+    }
+
+    function copyResult() {
+      const table = document.getElementById("resultTable");
+      if (table.style.display === "none") return alert("No results to copy.");
+      const rows = Array.from(table.querySelectorAll("tr"));
+      const text = rows.map(row => Array.from(row.cells).map(cell => cell.textContent).join("\t")).join("\n");
+      navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+    }
+
+    function exportCSV() {
+      const table = document.getElementById("resultTable");
+      if (table.style.display === "none") return alert("No results to export.");
+      let csv = "Infringing URL,Source URL\n";
+      table.querySelectorAll("tbody tr").forEach(row => {
+        const cols = row.querySelectorAll("td");
+        csv += `"${cols[0].innerText}","${cols[1].innerText}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "ip-house-sources.csv";
+      a.click();
+    }
+
+    function clearOutput() {
+      document.getElementById("resultTable").style.display = "none";
+      document.getElementById("resultTable").querySelector("tbody").innerHTML = "";
+    }
+  </script>
+</body>
+</html>

@@ -2,16 +2,21 @@ const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Root route added
+// ✅ Serve static frontend files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ Root route: serve index.html
 app.get("/", (req, res) => {
-  res.send("✅ IP House Media Extractor backend is running. Use POST /extract");
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// ✅ Extraction route
 app.post("/extract", async (req, res) => {
   const urls = req.body.urls;
   const results = [];
@@ -36,5 +41,6 @@ app.post("/extract", async (req, res) => {
   res.json({ results });
 });
 
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

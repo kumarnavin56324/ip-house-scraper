@@ -6,7 +6,7 @@ async function extract() {
 
   if (urls.length === 0) return;
 
-  const response = await fetch("https://ip-house-tool.onrender.com/extract", {
+  const response = await fetch("https://ip-house-scraper.onrender.com/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ urls })

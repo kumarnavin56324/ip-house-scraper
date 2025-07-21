@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>IP House Extractor</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IP House Media Extractor</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
     <h1>IP House Media Extractor</h1>
-    <textarea id="inputUrls" placeholder="Paste infringing URLs here..."></textarea>
+    <p class="subtitle">Paste up to 3000 infringing URLs (one per line) to extract embedded media sources.</p>
+    <textarea id="inputUrls" placeholder="Paste 1-3000 URLs here..."></textarea>
     <div class="actions">
       <button onclick="extract()">Extract</button>
       <button onclick="clearOutput()">Clear</button>
       <button onclick="copyResult()">Copy Result</button>
-      <button onclick="exportCSV()">Export as CSV</button>
+      <button onclick="exportCSV()">Export CSV</button>
     </div>
     <table id="resultTable">
       <thead>
@@ -21,6 +23,9 @@
       </thead>
       <tbody></tbody>
     </table>
+    <footer>
+      <p>Powered by IP House © 2025</p>
+    </footer>
   </div>
   <script src="script.js"></script>
 </body>

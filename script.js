@@ -5,6 +5,10 @@ async function extract() {
   tbody.innerHTML = "";
 
   if (urls.length === 0) return;
+  if (urls.length > 3000) {
+    alert("Please paste only up to 3000 URLs at once.");
+    return;
+  }
 
   const response = await fetch("/extract", {
     method: "POST",

@@ -1,44 +1,61 @@
-async function extractSources() {
-  const urls = document.getElementById("urlInput").value.split("\n").map(u => u.trim()).filter(Boolean);
+async function extract() {
+  const input = document.getElementById("inputUrls").value.trim();
+  const urls = input.split(/\r?\n/).filter(Boolean);
+  const tbody = document.querySelector("#resultTable tbody");
+  tbody.innerHTML = "";
+
+  if (urls.length === 0) return;
+
   const response = await fetch("/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ urls }),
+    body: JSON.stringify({ urls })
   });
+
   const data = await response.json();
-  const tbody = document.querySelector("#resultsTable tbody");
-  tbody.innerHTML = "";
-  data.results.forEach(item => {
+  data.results.forEach(entry => {
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${item.url}</td><td>${item.sources.join("<br>")}</td>`;
+    const urlCell = document.createElement("td");
+    const srcCell = document.createElement("td");
+
+    urlCell.textContent = entry.url;
+    srcCell.innerHTML = entry.sources.map(src => `<div>${src}</div>`).join("");
+
+    row.appendChild(urlCell);
+    row.appendChild(srcCell);
     tbody.appendChild(row);
   });
 }
 
-function clearAll() {
-  document.getElementById("urlInput").value = "";
-  document.querySelector("#resultsTable tbody").innerHTML = "";
+function clearOutput() {
+  document.getElementById("inputUrls").value = "";
+  document.querySelector("#resultTable tbody").innerHTML = "";
 }
 
-function copyTable() {
+function copyResult() {
+  const table = document.querySelector("#resultTable");
   const range = document.createRange();
-  range.selectNode(document.querySelector("table"));
+  range.selectNode(table);
   window.getSelection().removeAllRanges();
   window.getSelection().addRange(range);
   document.execCommand("copy");
-  alert("Table copied to clipboard!");
+  window.getSelection().removeAllRanges();
+  alert("Copied to clipboard!");
 }
 
 function exportCSV() {
-  const rows = [["Infringing URL", "Source URLs"]];
-  document.querySelectorAll("#resultsTable tbody tr").forEach(tr => {
-    const cols = tr.querySelectorAll("td");
-    rows.push([cols[0].innerText, cols[1].innerText.replace(/\n/g, ", ")]);
+  const rows = [["Infringing URL", "Source URL(s)"]];
+  document.querySelectorAll("#resultTable tbody tr").forEach(row => {
+    const cols = row.querySelectorAll("td");
+    rows.push([cols[0].innerText, cols[1].innerText.replace(/\n/g, " | ")]);
   });
-  const csv = rows.map(r => r.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "media_sources.csv";
-  a.click();
+
+  let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "ip_house_results.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }

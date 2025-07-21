@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IP House Media Extractor</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="UTF-8">
+  <title>IP House Extractor</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <h1>IP House Media Extractor</h1>
-    <textarea id="urlInput" placeholder="Paste 1000+ URLs here..."></textarea>
-    <div class="buttons">
-      <button onclick="extractSources()">Extract</button>
-      <button onclick="clearAll()">Clear</button>
-      <button onclick="copyTable()">Copy</button>
-      <button onclick="exportCSV()">Export CSV</button>
+    <textarea id="inputUrls" placeholder="Paste infringing URLs here..."></textarea>
+    <div class="actions">
+      <button onclick="extract()">Extract</button>
+      <button onclick="clearOutput()">Clear</button>
+      <button onclick="copyResult()">Copy Result</button>
+      <button onclick="exportCSV()">Export as CSV</button>
     </div>
-    <table id="resultsTable">
-      <thead><tr><th>Infringing URL</th><th>Source URLs</th></tr></thead>
+    <table id="resultTable">
+      <thead>
+        <tr><th>Infringing URL</th><th>Source URLs</th></tr>
+      </thead>
       <tbody></tbody>
     </table>
   </div>
